@@ -20,8 +20,35 @@ app.post("/img-to-pdf", upload.array("files"), async (req, res) => {
 
     const pdfDoc = await PDFDocument.create();
 
-    for (let file of req.files) {
-      const imgBytes = fs.readFileSync(file.path);
+   for (let file of req.files) {
+  try {
+    if (!file.mimetype.includes("jpeg") &&
+        !file.mimetype.includes("jpg") &&
+        !file.mimetype.includes("png")) {
+      continue;
+    }
+
+    const imgBytes = fs.readFileSync(file.path);
+
+    let img;
+    if (file.mimetype.includes("png")) {
+      img = await pdfDoc.embedPng(imgBytes);
+    } else {
+      img = await pdfDoc.embedJpg(imgBytes);
+    }
+
+    const page = pdfDoc.addPage([600, 800]);
+    page.drawImage(img, {
+      x: 50,
+      y: 100,
+      width: 500,
+      height: 600
+    });
+
+  } catch (err) {
+    console.log("Skipped bad file:", file.originalname);
+  }
+}
 
       let img;
       if (file.mimetype.includes("png")) {

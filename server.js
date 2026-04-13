@@ -8,58 +8,47 @@ const upload = multer({ dest: "uploads/" });
 
 app.use(express.static("public"));
 
-/* =========================
-   IMAGE → PDF
-========================= */
+app.get("/", (req, res) => {
+  res.send("QuickPDF is running 🚀");
+});
+
 app.post("/img-to-pdf", upload.array("files"), async (req, res) => {
-  const pdfDoc = await PDFDocument.create();
-
-  for (let file of req.files) {
-    const imgBytes = fs.readFileSync(file.path);
-
-    let img;
-    if (file.mimetype.includes("png")) {
-      img = await pdfDoc.embedPng(imgBytes);
-    } else {
-      img = await pdfDoc.embedJpg(imgBytes);
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.send("No files uploaded");
     }
 
-    const page = pdfDoc.addPage([600, 800]);
-    page.drawImage(img, {
-      x: 50,
-      y: 100,
-      width: 500,
-      height: 600
-    });
+    const pdfDoc = await PDFDocument.create();
+
+    for (let file of req.files) {
+      const imgBytes = fs.readFileSync(file.path);
+
+      let img;
+      if (file.mimetype.includes("png")) {
+        img = await pdfDoc.embedPng(imgBytes);
+      } else {
+        img = await pdfDoc.embedJpg(imgBytes);
+      }
+
+      const page = pdfDoc.addPage([600, 800]);
+      page.drawImage(img, {
+        x: 50,
+        y: 100,
+        width: 500,
+        height: 600
+      });
+    }
+
+    const pdfBytes = await pdfDoc.save();
+
+    fs.writeFileSync("output/result.pdf", pdfBytes);
+
+    res.download("output/result.pdf");
+
+  } catch (err) {
+    console.log(err);
+    res.send("Error processing file");
   }
-
-  const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync("output/result.pdf", pdfBytes);
-
-  res.download("output/result.pdf");
 });
 
-
-/* =========================
-   MERGE PDF
-========================= */
-app.post("/merge", upload.array("files"), async (req, res) => {
-  const mergedPdf = await PDFDocument.create();
-
-  for (let file of req.files) {
-    const pdfBytes = fs.readFileSync(file.path);
-    const pdf = await PDFDocument.load(pdfBytes);
-
-    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-    pages.forEach(p => mergedPdf.addPage(p));
-  }
-
-  const finalPdf = await mergedPdf.save();
-  fs.writeFileSync("output/merged.pdf", finalPdf);
-
-  res.download("output/merged.pdf");
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("QuickPDF running...");
-});
+app.listen(process.env.PORT || 3000);

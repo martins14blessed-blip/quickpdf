@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QuickPDF Tools</title>
+  <style>
+    body { font-family: Arial; text-align:center; background:#f5f6fa; }
+    header { background:#1a73e8; color:white; padding:20px; }
+    .box { background:white; margin:20px auto; padding:20px; width:300px; border-radius:10px; }
+    button { padding:10px; background:#1a73e8; color:white; border:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>QuickPDF Tools</h1>
+  <p>Convert & Merge PDFs Online</p>
+</header>
+
+<div class="box">
+  <h3>Image → PDF</h3>
+  <form action="/img-to-pdf" method="post" enctype="multipart/form-data">
+    <input type="file" name="files" multiple>
+    <button type="submit">Convert</button>
+  </form>
+</div>
+
+<div class="box">
+  <h3>Merge PDFs</h3>
+  <form action="/merge" method="post" enctype="multipart/form-data">
+    <input type="file" name="files" multiple>
+    <button type="submit">Merge</button>
+  </form>
+</div>
+
+</body>
+</html>

@@ -20,35 +20,49 @@ app.post("/img-to-pdf", upload.array("files"), async (req, res) => {
 
     const pdfDoc = await PDFDocument.create();
 
-   for (let file of req.files) {
-  try {
-    if (!file.mimetype.includes("jpeg") &&
-        !file.mimetype.includes("jpg") &&
-        !file.mimetype.includes("png")) {
-      continue;
+    for (let file of req.files) {
+      try {
+        const imgBytes = fs.readFileSync(file.path);
+
+        let img;
+        if (file.mimetype.includes("png")) {
+          img = await pdfDoc.embedPng(imgBytes);
+        } else if (
+          file.mimetype.includes("jpeg") ||
+          file.mimetype.includes("jpg")
+        ) {
+          img = await pdfDoc.embedJpg(imgBytes);
+        } else {
+          console.log("Skipping unsupported file:", file.originalname);
+          continue;
+        }
+
+        const page = pdfDoc.addPage([600, 800]);
+        page.drawImage(img, {
+          x: 50,
+          y: 100,
+          width: 500,
+          height: 600
+        });
+
+      } catch (err) {
+        console.log("File failed:", file.originalname);
+        continue;
+      }
     }
 
-    const imgBytes = fs.readFileSync(file.path);
+    const pdfBytes = await pdfDoc.save();
 
-    let img;
-    if (file.mimetype.includes("png")) {
-      img = await pdfDoc.embedPng(imgBytes);
-    } else {
-      img = await pdfDoc.embedJpg(imgBytes);
-    }
+    const outputPath = "output/result.pdf";
+    fs.writeFileSync(outputPath, pdfBytes);
 
-    const page = pdfDoc.addPage([600, 800]);
-    page.drawImage(img, {
-      x: 50,
-      y: 100,
-      width: 500,
-      height: 600
-    });
+    return res.download(outputPath);
 
   } catch (err) {
-    console.log("Skipped bad file:", file.originalname);
+    console.log("GLOBAL ERROR:", err);
+    return res.send("Error processing files. Try smaller images.");
   }
-}
+});
 
       let img;
       if (file.mimetype.includes("png")) {
